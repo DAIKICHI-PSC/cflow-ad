@@ -1,44 +1,77 @@
+import os, math
 import numpy as np
 import torch
-import torch.nn.functional as F
 
-np.random.seed(0)
-_GCONST_ = -0.9189385332046727 # ln(sqrt(2*pi))
+RESULT_DIR = './results'
+WEIGHT_DIR = './weights'
+MODEL_DIR  = './models'
 
+__all__ = ('save_results', 'save_weights', 'load_weights', 'adjust_learning_rate', 'warmup_learning_rate')
 
-class Score_Observer:
-    def __init__(self, name):
-        self.name = name
-        self.max_epoch = 0
-        self.max_score = 0.0
-        self.last = 0.0
-
-    def update(self, score, epoch, print_score=True):
-        self.last = score
-        save_weights = False
-        if epoch == 0 or score > self.max_score:
-            self.max_score = score
-            self.max_epoch = epoch
-            save_weights = True
-        if print_score:
-            self.print_score()
-        
-        return save_weights
-
-    def print_score(self):
-        print('{:s}: \t last: {:.2f} \t max: {:.2f} \t epoch_max: {:d}'.format(
-            self.name, self.last, self.max_score, self.max_epoch))
+try:
+    from torch.hub import load_state_dict_from_url
+except ImportError:
+    from torch.utils.model_zoo import load_url as load_state_dict_from_url
 
 
-def t2np(tensor):
-    '''pytorch tensor -> numpy array'''
-    return tensor.cpu().data.numpy() if tensor is not None else None
+def save_results(det_roc_obs, seg_roc_obs, seg_pro_obs, model_name, class_name, run_date):
+    result = '{:.2f},{:.2f},{:.2f} \t\tfor {:s}/{:s}/{:s} at epoch {:d}/{:d}/{:d} for {:s}\n'.format(
+        det_roc_obs.max_score, seg_roc_obs.max_score, seg_pro_obs.max_score,
+        det_roc_obs.name, seg_roc_obs.name, seg_pro_obs.name,
+        det_roc_obs.max_epoch, seg_roc_obs.max_epoch, seg_pro_obs.max_epoch, class_name)
+    result = result.replace("-", "_")
+    result = result.replace(":", "_")
+    if not os.path.exists(RESULT_DIR):
+        os.makedirs(RESULT_DIR)
+    fp = open(os.path.join(RESULT_DIR, '{}_{}.txt'.format(model_name, run_date)), "w")
+    fp.write(result)
+    fp.close()
 
 
-def get_logp(C, z, logdet_J):
-    logp = C * _GCONST_ - 0.5*torch.sum(z**2, 1) + logdet_J
-    return logp
+def save_weights(encoder, decoders, model_name, run_date):
+    if not os.path.exists(WEIGHT_DIR):
+        os.makedirs(WEIGHT_DIR)
+    state = {'encoder_state_dict': encoder.state_dict(),
+             'decoder_state_dict': [decoder.state_dict() for decoder in decoders]}
+    filename = '{}_{}.pt'.format(model_name, run_date)
+    filename = filename.replace("-", "_")
+    filename = filename.replace(":", "_")
+    path = os.path.join(WEIGHT_DIR, filename)
+    torch.save(state, path)
+    print('Saving weights to {}'.format(filename))
 
 
-def rescale(x):
-    return (x - x.min()) / (x.max() - x.min())
+def load_weights(encoder, decoders, filename):
+    path = os.path.join(filename)
+    state = torch.load(path)
+    encoder.load_state_dict(state['encoder_state_dict'], strict=False)
+    decoders = [decoder.load_state_dict(state, strict=False) for decoder, state in zip(decoders, state['decoder_state_dict'])]
+    print('Loading weights from {}'.format(filename))
+
+
+def adjust_learning_rate(c, optimizer, epoch):
+    lr = c.lr
+    if c.lr_cosine:
+        eta_min = lr * (c.lr_decay_rate ** 3)
+        lr = eta_min + (lr - eta_min) * (
+                1 + math.cos(math.pi * epoch / c.meta_epochs)) / 2
+    else:
+        steps = np.sum(epoch >= np.asarray(c.lr_decay_epochs))
+        if steps > 0:
+            lr = lr * (c.lr_decay_rate ** steps)
+
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+
+
+def warmup_learning_rate(c, epoch, batch_id, total_batches, optimizer):
+    if c.lr_warm and epoch < c.lr_warm_epochs:
+        p = (batch_id + epoch * total_batches) / \
+            (c.lr_warm_epochs * total_batches)
+        lr = c.lr_warmup_from + p * (c.lr_warmup_to - c.lr_warmup_from)
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr
+    #
+    for param_group in optimizer.param_groups:
+        lrate = param_group['lr']
+    return lrate
