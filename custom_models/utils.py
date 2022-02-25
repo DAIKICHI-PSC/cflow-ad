@@ -19,8 +19,10 @@ def save_results(det_roc_obs, seg_roc_obs, seg_pro_obs, model_name, class_name, 
         det_roc_obs.max_score, seg_roc_obs.max_score, seg_pro_obs.max_score,
         det_roc_obs.name, seg_roc_obs.name, seg_pro_obs.name,
         det_roc_obs.max_epoch, seg_roc_obs.max_epoch, seg_pro_obs.max_epoch, class_name)
-    result = result.replace("-", "_")
-    result = result.replace(":", "_")
+    model_name = model_name.replace("-", "_")
+    model_name = model_name.replace(":", "_")
+    run_date = run_date.replace("-", "_")
+    run_date = run_date.replace(":", "_")
     if not os.path.exists(RESULT_DIR):
         os.makedirs(RESULT_DIR)
     fp = open(os.path.join(RESULT_DIR, '{}_{}.txt'.format(model_name, run_date)), "w")
