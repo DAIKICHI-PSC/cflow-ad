@@ -19,6 +19,8 @@ def save_results(det_roc_obs, seg_roc_obs, seg_pro_obs, model_name, class_name, 
         det_roc_obs.max_score, seg_roc_obs.max_score, seg_pro_obs.max_score,
         det_roc_obs.name, seg_roc_obs.name, seg_pro_obs.name,
         det_roc_obs.max_epoch, seg_roc_obs.max_epoch, seg_pro_obs.max_epoch, class_name)
+    result = result.replace("-", "_")
+    result = result.replace(":", "_")
     if not os.path.exists(RESULT_DIR):
         os.makedirs(RESULT_DIR)
     fp = open(os.path.join(RESULT_DIR, '{}_{}.txt'.format(model_name, run_date)), "w")
@@ -32,6 +34,8 @@ def save_weights(encoder, decoders, model_name, run_date):
     state = {'encoder_state_dict': encoder.state_dict(),
              'decoder_state_dict': [decoder.state_dict() for decoder in decoders]}
     filename = '{}_{}.pt'.format(model_name, run_date)
+    filename = filename.replace("-", "_")
+    filename = filename.replace(":", "_")
     path = os.path.join(WEIGHT_DIR, filename)
     torch.save(state, path)
     print('Saving weights to {}'.format(filename))
