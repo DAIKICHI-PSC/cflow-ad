@@ -31,12 +31,12 @@ def export_hist(c, gts, scores, threshold):
     ax = plt.Axes(fig, [0., 0., 1., 1.])
     fig.add_axes(ax)
     plt.hist([Y[Y_label==1], Y[Y_label==0]], 500, density=True, color=['r', 'g'], label=['ANO', 'TYP'], alpha=0.75, histtype='barstacked')
-    image_file = os.path.join(image_dirs, 'hist_images_' + datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S"))
+    image_file = os.path.join(image_dirs, 'hist_images_' + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     fig.savefig(image_file, dpi=dpi, format='svg', bbox_inches = 'tight', pad_inches = 0.0)
     plt.close()
 
 def export_groundtruth(c, test_img, gts):
-    image_dirs = os.path.join(OUT_DIR, c.model, 'gt_images_' + datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S"))
+    image_dirs = os.path.join(OUT_DIR, c.model, 'gt_images_' + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     # images
     if not os.path.isdir(image_dirs):
         print('Exporting grountruth...')
@@ -63,7 +63,7 @@ def export_groundtruth(c, test_img, gts):
 
 
 def export_scores(c, test_img, scores, threshold):
-    image_dirs = os.path.join(OUT_DIR, c.model, 'sc_images_' + datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S"))
+    image_dirs = os.path.join(OUT_DIR, c.model, 'sc_images_' + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     # images
     if not os.path.isdir(image_dirs):
         print('Exporting scores...')
@@ -101,7 +101,7 @@ def export_scores(c, test_img, scores, threshold):
 
 
 def export_test_images(c, test_img, gts, scores, threshold):
-    image_dirs = os.path.join(OUT_DIR, c.model, 'images_' + datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S"))
+    image_dirs = os.path.join(OUT_DIR, c.model, 'images_' + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
     cm = 1/2.54
     # images
     if not os.path.isdir(image_dirs):
