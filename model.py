@@ -1,4 +1,5 @@
 import math
+from pickle import FALSE
 import torch
 from torch import nn
 from custom_models import *
@@ -39,7 +40,7 @@ def freia_flow_head(c, n_feat):
     print('NF coder:', n_feat)
     for k in range(c.coupling_blocks):
         coder.append(Fm.AllInOneBlock, subnet_constructor=subnet_fc, affine_clamping=c.clamp_alpha,
-            global_affine_type='SOFTPLUS', permute_soft=True)
+            global_affine_type='SOFTPLUS', permute_soft=False)
     return coder
 
 
@@ -49,7 +50,7 @@ def freia_cflow_head(c, n_feat):
     print('CNF coder:', n_feat)
     for k in range(c.coupling_blocks):
         coder.append(Fm.AllInOneBlock, cond=0, cond_shape=(n_cond,), subnet_constructor=subnet_fc, affine_clamping=c.clamp_alpha,
-            global_affine_type='SOFTPLUS', permute_soft=True)
+            global_affine_type='SOFTPLUS', permute_soft=False)
     return coder
 
 
