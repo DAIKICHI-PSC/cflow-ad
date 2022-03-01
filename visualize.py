@@ -11,7 +11,7 @@ OUT_DIR = './viz/'
 
 norm = matplotlib.colors.Normalize(vmin=0.0, vmax=255.0)
 cm = 1/2.54
-dpi = 300
+dpi = 600
 
 def denormalization(x, norm_mean, norm_std):
     mean = np.array(norm_mean)
